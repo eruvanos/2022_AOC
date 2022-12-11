@@ -12,7 +12,7 @@ def neigbors(vec: "Vec2"):
     yield vec + (0, -1)
     yield vec + (-1, -1)
     yield vec + (-1, 0)
-    yield vec + (-1, -1)
+    yield vec + (-1, 1)
 
 
 def neigbors_tl_br(vec: "Vec2", include_center=False):
