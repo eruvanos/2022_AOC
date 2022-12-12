@@ -1,5 +1,8 @@
 import math
 from collections import deque
+from dataclasses import dataclass
+from io import StringIO
+from operator import attrgetter
 from typing import List, Optional, Set, Dict, Any
 
 from utils.data import PriorityQueue
@@ -90,11 +93,32 @@ class MapGraph(GridGraph):
     def keys(self):
         return self.data.keys()
 
+    def __getitem__(self, item):
+        return self.data[item]
+
+    def __setitem__(self, key, value):
+        self.data[key] = value
+
     def __iter__(self):
-        return self.data.items()
+        return iter(self.data.items())
 
     def neighbors(self, current: Vec2) -> List:
         return [n for n in manhattan_neighbors(current) if n in self.data]
+
+    def __repr__(self):
+        text = StringIO()
+
+        min_x = min(map(attrgetter("x"), self.keys()))
+        min_y = min(map(attrgetter("y"), self.keys()))
+        max_x = max(map(attrgetter("x"), self.keys()))
+        max_y = max(map(attrgetter("y"), self.keys()))
+
+        for y in range(min_y, max_y + 1):
+            for x in range(min_x, max_x + 1):
+                text.write(self[Vec2(x, y)])
+            text.write("\n")
+
+        return text.getvalue()
 
 
 class SetGraph(GridGraph):
@@ -108,6 +132,21 @@ class SetGraph(GridGraph):
     def neighbors(self, current: Vec2) -> List:
         return [n for n in manhattan_neighbors(current) if n in self.data]
 
+    def __repr__(self):
+        text = StringIO()
+
+        min_x = min(map(attrgetter("x"), self.data))
+        min_y = min(map(attrgetter("y"), self.data))
+        max_x = max(map(attrgetter("x"), self.data))
+        max_y = max(map(attrgetter("y"), self.data))
+
+        for y in range(min_y, max_y + 1):
+            for x in range(min_x, max_x + 1):
+                text.write("." if Vec2(x, y) in self.data else "#")
+            text.write("\n")
+
+        return text.getvalue()
+
 
 def _reconstruct_path(came_from, goal):
     current = goal
@@ -119,13 +158,19 @@ def _reconstruct_path(came_from, goal):
     return path[1:]
 
 
-def a_star_search(graph: Graph, start: Vec2, goal: Vec2) -> Optional[List[Vec2]]:
+@dataclass
+class PathResult:
+    path: Optional[List[Vec2]]
+    came_from: Dict[Vec2, Vec2]
+
+
+def a_star_search(graph: Graph, start: Vec2, goal: Vec2) -> PathResult:
     """Implementation of A* algorithm.
 
     The algorithm uses a guess function (in this case manhattan distance) to prioritise path.
     """
     if start == goal:
-        return []
+        return PathResult([], {})
 
     frontier = PriorityQueue()
     frontier.put((0, start))
@@ -137,7 +182,7 @@ def a_star_search(graph: Graph, start: Vec2, goal: Vec2) -> Optional[List[Vec2]]
         current = frontier.get()[1]
 
         if current == goal:
-            return _reconstruct_path(came_from, goal)
+            return PathResult(path=_reconstruct_path(came_from, goal), came_from=came_from)
 
         neighbors = graph.neighbors(current)
         for neighbor in neighbors:
@@ -149,17 +194,17 @@ def a_star_search(graph: Graph, start: Vec2, goal: Vec2) -> Optional[List[Vec2]]
                 frontier.put((priority, neighbor))
                 came_from[neighbor] = current
 
-    return None
+    return PathResult(None, came_from)
 
 
-def breadth_first_search(graph: Graph, pos: Vec2, targets: Set[Vec2]):
+def breadth_first_search(graph: Graph, pos: Vec2, targets: Set[Vec2]) -> PathResult:
     """
     Breadth-first search (BFS) is an algorithm for searching a graph for a node that satisfies a given property.
 
     This implementation support search for multiple targets, returning path to the closest one (manhatten distance)
     """
     if pos in targets:
-        return []
+        return PathResult([], {})
 
     todo = deque()
     came_from = {pos: None}
@@ -184,7 +229,7 @@ def breadth_first_search(graph: Graph, pos: Vec2, targets: Set[Vec2]):
                     found.append(neighbor)
 
     if not found:
-        return None
+        return PathResult(None, came_from)
 
     found.sort(key=lambda p: flip(p))
-    return _reconstruct_path(came_from, found[0])
+    return PathResult(_reconstruct_path(came_from, found[0]), came_from)
