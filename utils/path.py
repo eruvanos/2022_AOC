@@ -105,17 +105,21 @@ class MapGraph(GridGraph):
     def neighbors(self, current: Vec2) -> List:
         return [n for n in manhattan_neighbors(current) if n in self.data]
 
+    @property
+    def max_y(self):
+        return max(map(attrgetter("y"), self.data))
+
     def __repr__(self):
         text = StringIO()
 
         min_x = min(map(attrgetter("x"), self.keys()))
         min_y = min(map(attrgetter("y"), self.keys()))
         max_x = max(map(attrgetter("x"), self.keys()))
-        max_y = max(map(attrgetter("y"), self.keys()))
+        max_y = self.max_y
 
         for y in range(min_y, max_y + 1):
             for x in range(min_x, max_x + 1):
-                text.write(self[Vec2(x, y)])
+                text.write(self.get(Vec2(x, y), "."))
             text.write("\n")
 
         return text.getvalue()
@@ -132,13 +136,17 @@ class SetGraph(GridGraph):
     def neighbors(self, current: Vec2) -> List:
         return [n for n in manhattan_neighbors(current) if n in self.data]
 
+    @property
+    def max_y(self):
+        return max(map(attrgetter("y"), self.data))
+
     def __repr__(self):
         text = StringIO()
 
         min_x = min(map(attrgetter("x"), self.data))
         min_y = min(map(attrgetter("y"), self.data))
         max_x = max(map(attrgetter("x"), self.data))
-        max_y = max(map(attrgetter("y"), self.data))
+        max_y = self.max_y
 
         for y in range(min_y, max_y + 1):
             for x in range(min_x, max_x + 1):

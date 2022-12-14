@@ -102,6 +102,11 @@ class Vec2(NamedTuple):
 
         return (360 + angle if angle < 0 else angle) % 360
 
+    @staticmethod
+    def from_string(value: str):
+        x, y = map(int, map(str.strip, value.split(",")))
+        return Vec2(x, y)
+
 
 class Vec3(NamedTuple):
     """3D Vector implementation with basic features"""
