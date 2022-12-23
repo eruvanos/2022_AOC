@@ -1,9 +1,9 @@
 import math
-from collections import deque
+from collections import deque, UserDict
 from dataclasses import dataclass
 from io import StringIO
 from operator import attrgetter
-from typing import List, Optional, Set, Dict, Any
+from typing import List, Optional, Set, Dict
 
 from utils.data import PriorityQueue
 from utils.vector import Vec2, manhattan_neighbors
@@ -77,30 +77,12 @@ class ArrayGraph(GridGraph):
                     yield x, y, c
 
 
-class MapGraph(GridGraph):
+class MapGraph(GridGraph, UserDict):
     """
     Graph implementation backed by a map used like Dict[Vec2, Any].
 
     For search algorithms, only not blocked nodes should be added.
     """
-
-    def __init__(self, data: Dict[Vec2, Any]):
-        self.data = data
-
-    def get(self, cur: Vec2, default=None):
-        return self.data.get(cur, default)
-
-    def keys(self):
-        return self.data.keys()
-
-    def __getitem__(self, item):
-        return self.data[item]
-
-    def __setitem__(self, key, value):
-        self.data[key] = value
-
-    def __iter__(self):
-        return iter(self.data.items())
 
     def neighbors(self, current: Vec2) -> List:
         return [n for n in manhattan_neighbors(current) if n in self.data]
@@ -109,16 +91,24 @@ class MapGraph(GridGraph):
     def max_y(self):
         return max(map(attrgetter("y"), self.data))
 
+    @property
+    def min_y(self):
+        return min(map(attrgetter("y"), self.data))
+
+    @property
+    def max_x(self):
+        return max(map(attrgetter("x"), self.data))
+
+    @property
+    def min_x(self):
+        return min(map(attrgetter("x"), self.data))
+
     def __repr__(self):
         text = StringIO()
 
-        min_x = min(map(attrgetter("x"), self.keys()))
-        min_y = min(map(attrgetter("y"), self.keys()))
-        max_x = max(map(attrgetter("x"), self.keys()))
-        max_y = self.max_y
-
-        for y in range(min_y, max_y + 1):
-            for x in range(min_x, max_x + 1):
+        for y in range(self.min_y, self.max_y + 1):
+            text.write(f"{y:03.0f} ")
+            for x in range(self.min_x, self.max_x + 1):
                 text.write(self.get(Vec2(x, y), "."))
             text.write("\n")
 

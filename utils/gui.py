@@ -4,19 +4,20 @@ from typing import Dict, Any
 
 import arcade
 
-from utils import Vector
+from utils.path import MapGraph
+from utils.vector import Vec2
 
 
 class Canvas(arcade.Window):
     """
-    Canvas which displays Vector objects.
+    Canvas which displays Vec2 objects.
     Designed as an GUI extension for AOC
     """
 
     def __init__(self, scale=10, margin=50, debug=False):
         super().__init__(resizable=True)
-        self._vectors: Dict[Vector, Any] = dict()
-        self._fig_spr: Dict[Vector, arcade.Sprite] = dict()
+        self._vectors: Dict[Vec2, Any] = dict()
+        self._fig_spr: Dict[Vec2, arcade.Sprite] = dict()
 
         self._sprites = arcade.SpriteList()
         self._remove_queue = Queue()
@@ -28,13 +29,13 @@ class Canvas(arcade.Window):
         self._debug = debug
         self._debug_text = ""
 
-    def add(self, fig: Vector):
+    def add(self, fig: Vec2):
         self._vectors[fig] = 0
 
-    def set(self, fig: Vector, data: int):
+    def set(self, fig: Vec2, data: int):
         self._vectors[fig] = data
 
-    def remove(self, fig: Vector):
+    def remove(self, fig: Vec2):
         # remove from update and drawing first
         del self._vectors[fig]
 
@@ -44,7 +45,7 @@ class Canvas(arcade.Window):
             self._remove_queue.put(spr)
             del self._fig_spr[fig]
 
-    def create_new_sprite(self, fig: Vector):
+    def create_new_sprite(self, fig: Vec2):
         return arcade.Sprite()
 
     def get_key_event(self):
@@ -73,7 +74,7 @@ class Canvas(arcade.Window):
                 self._sprites.append(spr)
             self.sprite_update(fig, spr, tex)
 
-    def sprite_update(self, vec: Vector, spr: arcade.Sprite, tex: int):
+    def sprite_update(self, vec: Vec2, spr: arcade.Sprite, tex: int):
         """
         Updates pos, and tex_index
         """
@@ -120,3 +121,34 @@ class Canvas(arcade.Window):
         Overwrite this method to draw textures while on_draw.
         """
         pass
+
+
+class MapDisplay(arcade.Window):
+    """
+    WIP
+    Visualize a MapGraph, provide easy addable actions to triger updates or simulation ticks.
+    """
+
+    def __init__(self, graph: MapGraph):
+        self.graph = graph
+        self.sprites = arcade.SpriteList()
+
+    def on_update(self, dt):
+        pass
+
+    def on_draw(self):
+        """
+        Draws internal sprite list
+        """
+        arcade.start_render()
+        self._sprites.draw()
+
+        self.draw_textures()
+
+        self.apply_margine()
+
+        if self._debug_text:
+            left, right, bottom, top = self.get_viewport()
+            arcade.draw_text(
+                self._debug_text, left + 10, bottom + 5, color=arcade.color.RED
+            )
