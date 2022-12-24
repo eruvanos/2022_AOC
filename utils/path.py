@@ -114,6 +114,21 @@ class MapGraph(GridGraph, UserDict):
 
         return text.getvalue()
 
+    def to_string(self, y_reversed=False):
+        text = StringIO()
+
+        y_range = range(self.min_y, self.max_y + 1)
+
+        if y_reversed:
+            y_range = reversed(y_range)
+
+        for y in y_range:
+            text.write(f"{y:03.0f} ")
+            for x in range(self.min_x, self.max_x + 1):
+                text.write(self.get(Vec2(x, y), "."))
+            text.write("\n")
+
+        return text.getvalue()
 
 class SetGraph(GridGraph):
     """
